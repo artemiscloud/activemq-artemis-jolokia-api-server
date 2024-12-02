@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-oc kustomize deploy | oc delete -f -
+oc kustomize deploy/default | oc delete -f -

@@ -81,56 +81,122 @@ If necessary update the code that is using the hooks to comply with your changes
 
 ## Path Table
 
-| Method | Path                                                                    | Description                            |
-| ------ | ----------------------------------------------------------------------- | -------------------------------------- |
-| POST   | [/jolokia/login](#postjolokialogin)                                     | The login api                          |
-| GET    | [/brokers](#getbrokers)                                                 | retrieve the broker mbean              |
-| GET    | [/brokerDetails](#getbrokerdetails)                                     | broker details                         |
-| GET    | [/readBrokerAttributes](#getreadbrokerattributes)                       | read broker attributes                 |
-| GET    | [/readAddressAttributes](#getreadaddressattributes)                     | read address attributes                |
-| GET    | [/readQueueAttributes](#getreadqueueattributes)                         | read queue attributes                  |
-| GET    | [/readAcceptorAttributes](#getreadacceptorattributes)                   | read acceptor attributes               |
-| GET    | [/readClusterConnectionAttributes](#getreadclusterconnectionattributes) | read cluster connection attributes     |
-| POST   | [/execClusterConnectionOperation](#postexecclusterconnectionoperation)  | execute a cluster connection operation |
-| GET    | [/checkCredentials](#getcheckcredentials)                               | Check the validity of the credentials  |
-| POST   | [/execBrokerOperation](#postexecbrokeroperation)                        | execute a broker operation             |
-| GET    | [/brokerComponents](#getbrokercomponents)                               | list all mbeans                        |
-| GET    | [/addresses](#getaddresses)                                             | retrieve all addresses on broker       |
-| GET    | [/queues](#getqueues)                                                   | list queues                            |
-| GET    | [/queueDetails](#getqueuedetails)                                       | retrieve queue details                 |
-| GET    | [/addressDetails](#getaddressdetails)                                   | retrieve address details               |
-| GET    | [/acceptors](#getacceptors)                                             | list acceptors                         |
-| GET    | [/acceptorDetails](#getacceptordetails)                                 | retrieve acceptor details              |
-| GET    | [/clusterConnections](#getclusterconnections)                           | list cluster connections               |
-| GET    | [/clusterConnectionDetails](#getclusterconnectiondetails)               | retrieve cluster connection details    |
-| GET    | [/api-info](#getapi-info)                                               | the api info                           |
+| Method | Path                                                                    | Description                              |
+| ------ | ----------------------------------------------------------------------- | ---------------------------------------- |
+| POST   | [/server/login](#postserverlogin)                                       | Api to log in to the api server.         |
+| POST   | [/jolokia/login](#postjolokialogin)                                     | The login api                            |
+| GET    | [/server/admin/listEndpoints](#getserveradminlistendpoints)             | List endpoints managed by the api-server |
+| GET    | [/brokers](#getbrokers)                                                 | retrieve the broker mbean                |
+| GET    | [/brokerDetails](#getbrokerdetails)                                     | broker details                           |
+| GET    | [/readBrokerAttributes](#getreadbrokerattributes)                       | read broker attributes                   |
+| GET    | [/readAddressAttributes](#getreadaddressattributes)                     | read address attributes                  |
+| GET    | [/readQueueAttributes](#getreadqueueattributes)                         | read queue attributes                    |
+| GET    | [/readAcceptorAttributes](#getreadacceptorattributes)                   | read acceptor attributes                 |
+| GET    | [/readClusterConnectionAttributes](#getreadclusterconnectionattributes) | read cluster connection attributes       |
+| POST   | [/execClusterConnectionOperation](#postexecclusterconnectionoperation)  | execute a cluster connection operation   |
+| GET    | [/checkCredentials](#getcheckcredentials)                               | Check the validity of the credentials    |
+| POST   | [/execBrokerOperation](#postexecbrokeroperation)                        | execute a broker operation               |
+| GET    | [/brokerComponents](#getbrokercomponents)                               | list all mbeans                          |
+| GET    | [/addresses](#getaddresses)                                             | retrieve all addresses on broker         |
+| GET    | [/queues](#getqueues)                                                   | list queues                              |
+| GET    | [/queueDetails](#getqueuedetails)                                       | retrieve queue details                   |
+| GET    | [/addressDetails](#getaddressdetails)                                   | retrieve address details                 |
+| GET    | [/acceptors](#getacceptors)                                             | list acceptors                           |
+| GET    | [/acceptorDetails](#getacceptordetails)                                 | retrieve acceptor details                |
+| GET    | [/clusterConnections](#getclusterconnections)                           | list cluster connections                 |
+| GET    | [/clusterConnectionDetails](#getclusterconnectiondetails)               | retrieve cluster connection details      |
+| GET    | [/api-info](#getapi-info)                                               | the api info                             |
 
 ## Reference Table
 
-| Name               | Path                                                                            | Description |
-| ------------------ | ------------------------------------------------------------------------------- | ----------- |
-| OperationRef       | [#/components/schemas/OperationRef](#componentsschemasoperationref)             |             |
-| OperationArgument  | [#/components/schemas/OperationArgument](#componentsschemasoperationargument)   |             |
-| OperationResult    | [#/components/schemas/OperationResult](#componentsschemasoperationresult)       |             |
-| DummyResponse      | [#/components/schemas/DummyResponse](#componentsschemasdummyresponse)           |             |
-| ApiResponse        | [#/components/schemas/ApiResponse](#componentsschemasapiresponse)               |             |
-| LoginResponse      | [#/components/schemas/LoginResponse](#componentsschemasloginresponse)           |             |
-| Address            | [#/components/schemas/Address](#componentsschemasaddress)                       |             |
-| Acceptor           | [#/components/schemas/Acceptor](#componentsschemasacceptor)                     |             |
-| ClusterConnection  | [#/components/schemas/ClusterConnection](#componentsschemasclusterconnection)   |             |
-| Queue              | [#/components/schemas/Queue](#componentsschemasqueue)                           |             |
-| Broker             | [#/components/schemas/Broker](#componentsschemasbroker)                         |             |
-| FailureResponse    | [#/components/schemas/FailureResponse](#componentsschemasfailureresponse)       |             |
-| JavaTypes          | [#/components/schemas/JavaTypes](#componentsschemasjavatypes)                   |             |
-| ComponentDetails   | [#/components/schemas/ComponentDetails](#componentsschemascomponentdetails)     |             |
-| Signatures         | [#/components/schemas/Signatures](#componentsschemassignatures)                 |             |
-| Signature          | [#/components/schemas/Signature](#componentsschemassignature)                   |             |
-| Attr               | [#/components/schemas/Attr](#componentsschemasattr)                             |             |
-| Argument           | [#/components/schemas/Argument](#componentsschemasargument)                     |             |
-| ComponentAttribute | [#/components/schemas/ComponentAttribute](#componentsschemascomponentattribute) |             |
-| ExecResult         | [#/components/schemas/ExecResult](#componentsschemasexecresult)                 |             |
+| Name                | Path                                                                              | Description |
+| ------------------- | --------------------------------------------------------------------------------- | ----------- |
+| OperationRef        | [#/components/schemas/OperationRef](#componentsschemasoperationref)               |             |
+| OperationArgument   | [#/components/schemas/OperationArgument](#componentsschemasoperationargument)     |             |
+| OperationResult     | [#/components/schemas/OperationResult](#componentsschemasoperationresult)         |             |
+| DummyResponse       | [#/components/schemas/DummyResponse](#componentsschemasdummyresponse)             |             |
+| ApiResponse         | [#/components/schemas/ApiResponse](#componentsschemasapiresponse)                 |             |
+| ServerLoginResponse | [#/components/schemas/ServerLoginResponse](#componentsschemasserverloginresponse) |             |
+| LoginResponse       | [#/components/schemas/LoginResponse](#componentsschemasloginresponse)             |             |
+| Address             | [#/components/schemas/Address](#componentsschemasaddress)                         |             |
+| Acceptor            | [#/components/schemas/Acceptor](#componentsschemasacceptor)                       |             |
+| ClusterConnection   | [#/components/schemas/ClusterConnection](#componentsschemasclusterconnection)     |             |
+| Queue               | [#/components/schemas/Queue](#componentsschemasqueue)                             |             |
+| Broker              | [#/components/schemas/Broker](#componentsschemasbroker)                           |             |
+| Endpoint            | [#/components/schemas/Endpoint](#componentsschemasendpoint)                       |             |
+| FailureResponse     | [#/components/schemas/FailureResponse](#componentsschemasfailureresponse)         |             |
+| JavaTypes           | [#/components/schemas/JavaTypes](#componentsschemasjavatypes)                     |             |
+| ComponentDetails    | [#/components/schemas/ComponentDetails](#componentsschemascomponentdetails)       |             |
+| Signatures          | [#/components/schemas/Signatures](#componentsschemassignatures)                   |             |
+| Signature           | [#/components/schemas/Signature](#componentsschemassignature)                     |             |
+| Attr                | [#/components/schemas/Attr](#componentsschemasattr)                               |             |
+| Argument            | [#/components/schemas/Argument](#componentsschemasargument)                       |             |
+| ComponentAttribute  | [#/components/schemas/ComponentAttribute](#componentsschemascomponentattribute)   |             |
+| ExecResult          | [#/components/schemas/ExecResult](#componentsschemasexecresult)                   |             |
+| EmptyBody           | [#/components/schemas/EmptyBody](#componentsschemasemptybody)                     |             |
+| bearerAuth          | [#/components/securitySchemes/bearerAuth](#componentssecurityschemesbearerauth)   |             |
 
 ## Path Details
+
+---
+
+### [POST]/server/login
+
+- Summary  
+  Api to log in to the api server.
+
+- Description  
+  This api is used to login to the api server.
+
+- Security
+
+#### RequestBody
+
+- application/json
+
+```ts
+{
+  userName: string;
+  password: string;
+}
+```
+
+#### Responses
+
+- 200 Success
+
+`application/json`
+
+```ts
+{
+  message: string;
+  status: string;
+  // The jwt token
+  bearerToken: string;
+}
+```
+
+- 401 Invalid credentials
+
+`application/json`
+
+```ts
+{
+  status: enum[failed, error]
+  message: string
+}
+```
+
+- 500 Internal server error
+
+`application/json`
+
+```ts
+{
+  status: enum[failed, error]
+  message: string
+}
+```
 
 ---
 
@@ -141,10 +207,14 @@ If necessary update the code that is using the hooks to comply with your changes
 
 - Description  
   This api is used to login to a jolokia endpoint. It tries to get the broker mbean via the joloia url using the parameters passed in.
+
   If it succeeds, it generates a [jwt token](https://jwt.io/introduction) and returns  
   it back to the client. If it fails it returns a error.
+
   Once authenticated, the client can access the  
   apis defined in this file. With each request the client must include a valid jwt token in a http header named `jolokia-session-id`. The src will validate the token before processing a request is and rejects the request if the token is not valid.
+
+- Security
 
 #### RequestBody
 
@@ -206,6 +276,53 @@ If necessary update the code that is using the hooks to comply with your changes
 
 ---
 
+### [GET]/server/admin/listEndpoints
+
+- Summary  
+  List endpoints managed by the api-server
+
+- Description  
+  ** List broker jolokia endpoints **  
+   The return value is a list of endpoints currently  
+   managed by the api server.
+
+#### Responses
+
+- 200 Success
+
+`application/json`
+
+```ts
+{
+  name: string
+  url?: string
+}[]
+```
+
+- 401 Invalid credentials
+
+`application/json`
+
+```ts
+{
+  status: enum[failed, error]
+  message: string
+}
+```
+
+- 500 Internal server error
+
+`application/json`
+
+```ts
+{
+  status: enum[failed, error]
+  message: string
+}
+```
+
+---
+
 ### [GET]/brokers
 
 - Summary  
@@ -216,10 +333,20 @@ If necessary update the code that is using the hooks to comply with your changes
    The return value is a one-element array that contains  
    the broker's mbean object name.
 
+#### Parameters(Query)
+
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
+```
+
+```ts
+endpoint-name?: string
 ```
 
 #### Responses
@@ -270,10 +397,16 @@ jolokia-session-id: string
    description of all the operations and attributes of the broker's mbean.  
    It is defined in [ActiveMQServerControl.java](https://github.com/apache/activemq-artemis/blob/2.33.0/artemis-core-client/src/main/java/org/apache/activemq/artemis/api/core/management/ActiveMQServerControl.java)
 
+#### Parameters(Query)
+
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -335,10 +468,14 @@ jolokia-session-id: string
 names?: string[]
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -407,10 +544,14 @@ name: string;
 attrs?: string[]
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -487,10 +628,14 @@ routing-type: string
 attrs?: string[]
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -559,10 +704,14 @@ name: string;
 attrs?: string[]
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -631,10 +780,14 @@ name: string;
 attrs?: string[]
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -699,10 +852,14 @@ jolokia-session-id: string
 name: string;
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### RequestBody
@@ -775,7 +932,7 @@ jolokia-session-id: string
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -827,10 +984,16 @@ jolokia-session-id: string
    The return value is a one element json array that contains  
    return values of invoked operation along with the request info.
 
+#### Parameters(Query)
+
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### RequestBody
@@ -905,10 +1068,16 @@ jolokia-session-id: string
   It retrieves and returns a list of all mbeans  
    registered directly under the broker managment domain.
 
+#### Parameters(Query)
+
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -954,10 +1123,16 @@ string[]
   **Get all addresses in a broker**
   It retrieves and returns a list of all address mbeans
 
+#### Parameters(Query)
+
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -1016,10 +1191,14 @@ jolokia-session-id: string
 address?: string
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -1094,10 +1273,14 @@ name: string;
 routingType: string;
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -1159,10 +1342,14 @@ jolokia-session-id: string
 name: string;
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -1215,10 +1402,16 @@ jolokia-session-id: string
   **Get all acceptors in a broker**
   It retrieves and returns a list of all acceptor mbeans
 
+#### Parameters(Query)
+
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -1279,10 +1472,14 @@ jolokia-session-id: string
 name: string;
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -1335,10 +1532,16 @@ jolokia-session-id: string
   **Get all cluster connections in a broker**
   It retrieves and returns a list of all cluster connection mbeans
 
+#### Parameters(Query)
+
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -1399,10 +1602,14 @@ jolokia-session-id: string
 name: string;
 ```
 
+```ts
+targetEndpoint?: string
+```
+
 #### Headers
 
 ```ts
-jolokia-session-id: string
+jolokia-session-id?: string
 ```
 
 #### Responses
@@ -1453,8 +1660,11 @@ jolokia-session-id: string
 
 - Description  
   **Show all exposed paths on the api server**
+
   The return value is a json object that contains  
    description of all api paths defined in the api server.
+
+- Security
 
 #### Responses
 
@@ -1465,6 +1675,9 @@ jolokia-session-id: string
 ```ts
 {
   message: {
+    security: {
+      enabled?: boolean
+    }
     info: {
       name?: string
       description?: string
@@ -1537,6 +1750,9 @@ jolokia-session-id: string
 ```ts
 {
   message: {
+    security: {
+      enabled?: boolean
+    }
     info: {
       name?: string
       description?: string
@@ -1550,6 +1766,17 @@ jolokia-session-id: string
   status?: enum[successful]
   // The jwt token
   jolokia-session-id?: string
+}
+```
+
+### #/components/schemas/ServerLoginResponse
+
+```ts
+{
+  message: string;
+  status: string;
+  // The jwt token
+  bearerToken: string;
 }
 ```
 
@@ -1618,6 +1845,15 @@ jolokia-session-id: string
 ```ts
 {
   name: string;
+}
+```
+
+### #/components/schemas/Endpoint
+
+```ts
+{
+  name: string
+  url?: string
 }
 ```
 
@@ -1747,5 +1983,22 @@ jolokia-session-id: string
   error?: string
   timestamp?: number
   status: number
+}
+```
+
+### #/components/schemas/EmptyBody
+
+```ts
+{
+}
+```
+
+### #/components/securitySchemes/bearerAuth
+
+```ts
+{
+  "type": "http",
+  "scheme": "bearer",
+  "bearerFormat": "JWT"
 }
 ```

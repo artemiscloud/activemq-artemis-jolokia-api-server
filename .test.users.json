@@ -1,0 +1,26 @@
+{
+  "users": [
+    {
+      "id": "user1",
+      "email": "user1@example.com",
+      "hash": "$2a$12$nv9iV5/UNuV4Mdj1Jf8zfuUraqboSRtSQqCmtOc4F7rdwmOb9IzNu"
+    },
+    {
+      "id": "user2",
+      "hash": "$2a$12$VHZ9aJ5A87YeFop4xVW.aOMm95ClU.EviyT9o0i8HYLdG6w6ctMfW"
+    },
+    {
+      "id": "root",
+      "email": "user3@example.com",
+      "hash": "$2a$12$VHZ9aJ5A87YeFop4xVW.aOMm95ClU.EviyT9o0i8HYLdG6w6ctMfW"
+    },
+    {
+      "id": "usernoroles",
+      "hash": "$2a$12$J.CGc062y9YhdvYEqqiqoetDronJwUFKR0f2fGARwgHuasAt/QKa2"
+    },
+    {
+      "id": "admin",
+      "hash": "$2a$15$deBI0sO4Cvn2gr/QA5pju.94Klh377Np.mcYteBgYlQuyeIwyK4UK"
+    }
+  ]
+}

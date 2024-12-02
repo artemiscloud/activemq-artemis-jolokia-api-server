@@ -7,7 +7,7 @@ export const logger = pino({
     level: (label) => {
       return { level: label.toUpperCase() };
     },
-    bindings: (bindings) => {
+    bindings: () => {
       return {};
     },
   },
@@ -19,3 +19,7 @@ export const logRequest = (enabled: boolean) =>
     level: 'info',
     enabled,
   });
+
+export const InitLoggers = () => {
+  logger.level = process.env.LOG_LEVEL || 'info';
+};

@@ -1,0 +1,12 @@
+.git/
+.gitignore
+node_modules/
+dist/
+*.md
+logs/
+tmp
+.eslintrc.yml
+.prettierrc.yml
+.test*
+.jest.config.js
+.users.json

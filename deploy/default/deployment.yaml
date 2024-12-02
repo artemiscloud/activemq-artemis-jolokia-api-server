@@ -34,11 +34,21 @@ spec:
             requests:
               cpu: 10m
               memory: 50Mi
+          env:
+            - name: USERS_FILE_URL
+              value: "/etc/activemq-artemis-jolokia-api-server/users/users.json"
           volumeMounts:
             - name: plugin-serving-cert
               readOnly: true
               mountPath: /var/serving-cert
+            - name: api-users
+              readOnly: true
+              mountPath: /etc/activemq-artemis-jolokia-api-server/users
       volumes:
+        - name: api-users
+          configMap:
+            name: api-users
+            defaultMode: 420
         - name: plugin-serving-cert
           secret:
             secretName: plugin-serving-cert

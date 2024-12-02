@@ -1,4 +1,11 @@
-import base64 from 'base-64';
+import { logger } from '../../utils/logger';
+import {
+  AuthenticationData,
+  AuthHandler,
+  AuthOptions,
+  CreateAuthHandler,
+  Endpoint,
+} from '../../utils/security_util';
 import fetch from 'node-fetch';
 
 // search the broker
@@ -51,13 +58,14 @@ export enum ComponentType {
 }
 
 export class ArtemisJolokia {
-  readonly username: string;
-  readonly password: string;
+  readonly name: string;
+  readonly serverUrl: string;
   readonly protocol: string;
   readonly port: string;
   readonly hostName: string;
   brokerName: string;
   readonly baseUrl: string;
+  authHandlers: Array<AuthHandler>;
 
   static readonly KEY_COMPONENT_TYPE = 'component-type';
   static readonly KEY_COMPONENT_NAME = 'component-name';
@@ -90,45 +98,80 @@ export class ArtemisJolokia {
     [ComponentType.CLUSTER_CONNECTION, clusterConnectionComponentPattern],
   ]);
 
-  constructor(
-    username: string,
-    password: string,
-    hostName: string,
-    protocol: string,
-    port: string,
-  ) {
-    this.username = username;
-    this.password = password;
-    this.protocol = protocol;
-    this.port = port;
-    this.hostName = hostName;
+  constructor(endpoint: Endpoint, isFromClient = false) {
+    const url = new URL(endpoint.url);
+
+    this.name = endpoint.name;
+    this.protocol = url.protocol.substring(0, url.protocol.length - 1);
+    this.port = url.port
+      ? url.port
+      : ArtemisJolokia.getDefaultPort(this.protocol);
+    this.hostName = url.hostname;
     this.brokerName = '';
+    this.serverUrl = this.protocol + '://' + this.hostName + ':' + this.port;
+
     this.baseUrl =
-      this.protocol +
-      '://' +
-      this.hostName +
-      ':' +
-      this.port +
-      '/console/jolokia/';
+      this.serverUrl + ArtemisJolokia.makeJolokiaPrefix(endpoint.jolokiaPrefix);
+
+    this.createAuthHandlers(endpoint.auth, isFromClient);
   }
 
-  getAuthHeaders = (): fetch.Headers => {
-    const headers = new fetch.Headers();
-    headers.set(
-      'Authorization',
-      'Basic ' + base64.encode(this.username + ':' + this.password),
-    );
-    //this may not needed as we set strict-check to false
-    headers.set('Origin', 'http://' + this.hostName);
-    return headers;
+  createAuthHandlers = (auth: AuthenticationData[], isFromClient = false) => {
+    this.authHandlers = new Array<AuthHandler>();
+    auth.forEach((authData) => {
+      this.authHandlers.push(CreateAuthHandler(authData, isFromClient));
+    });
   };
+
+  static makeJolokiaPrefix = (input: string) => {
+    if (!input) {
+      return '/console/jolokia/';
+    }
+    if (!input.startsWith('/')) {
+      input = '/' + input;
+    }
+    if (!input.endsWith('/')) {
+      input = input + '/';
+    }
+    return input;
+  };
+
+  static getDefaultPort = (prot: string): string => {
+    if (prot === 'https') {
+      return '443';
+    }
+    return '80';
+  };
+
+  validateBroker = async (): Promise<boolean> => {
+    const result = await this.getComponents(ComponentType.BROKER);
+    if (result.length === 1 && result[0].length > 0) {
+      //org.apache.activemq.artemis:broker="amq-broker"
+      this.brokerName = result[0].split('=', 2)[1];
+
+      //remove quotes
+      this.brokerName = this.brokerName.replace(/"/g, '');
+      return true;
+    }
+    return false;
+  };
+
+  prepareRequest(reqUrl: string): AuthOptions {
+    const headers = new fetch.Headers();
+    headers.set('Origin', this.serverUrl);
+    const authOpts = {
+      headers: headers,
+    };
+    this.authHandlers.forEach((handler) => {
+      handler.handleRequest(reqUrl, authOpts);
+    });
+    return authOpts;
+  }
 
   getComponents = async (
     compType: ComponentType,
     params?: Map<string, string>,
   ): Promise<Array<string>> => {
-    const headers = this.getAuthHeaders();
-
     let searchPattern = this.componentMap.get(compType);
 
     if (typeof params !== 'undefined') {
@@ -141,11 +184,23 @@ export class ArtemisJolokia {
 
     const url = this.baseUrl + 'search/' + searchPattern;
 
+    const { headers, agent } = this.prepareRequest(url);
+
     const reply = await fetch(url, {
       method: 'GET',
       headers: headers,
+      agent: agent ?? false,
     })
-      .then((response) => response.text()) //check response.ok
+      .then((response) => {
+        logger.debug(
+          { response: response.ok, status: response.statusText },
+          'response from endpoint',
+        );
+        if (response.ok) {
+          return response.text();
+        }
+        throw response;
+      })
       .then((message) => {
         const resp: JolokiaResponseType = JSON.parse(message);
         return resp.value;
@@ -158,8 +213,6 @@ export class ArtemisJolokia {
     compType: ComponentType,
     param?: Map<string, string>,
   ): Promise<JolokiaObjectDetailsType> => {
-    const headers = this.getAuthHeaders();
-
     let searchPattern = this.componentDetailsMap.get(compType);
 
     if (param) {
@@ -171,9 +224,12 @@ export class ArtemisJolokia {
 
     const url = this.baseUrl + 'list/' + searchPattern;
 
+    const { headers, agent } = this.prepareRequest(url);
+
     const reply = await fetch(url, {
       method: 'GET',
       headers: headers,
+      agent: agent ?? false,
     })
       .then((response) => {
         if (response.ok) {
@@ -202,7 +258,7 @@ export class ArtemisJolokia {
     signature: string,
     args: string[],
   ): Promise<JolokiaExecResponse> => {
-    const headers = this.getAuthHeaders();
+    const { headers, agent } = this.prepareRequest(this.baseUrl);
     headers.set('Content-Type', 'application/json');
 
     const reply = await fetch(this.baseUrl, {
@@ -215,6 +271,7 @@ export class ArtemisJolokia {
         signature,
         args,
       ),
+      agent: agent ?? false,
     })
       .then((response) => {
         if (response.ok) {
@@ -238,7 +295,7 @@ export class ArtemisJolokia {
     param: Map<string, string>,
     attrNames: string[],
   ): Promise<JolokiaReadResponse[]> => {
-    const headers = this.getAuthHeaders();
+    const { headers, agent } = this.prepareRequest(this.baseUrl);
     headers.set('Content-Type', 'application/json');
     const reply = await fetch(this.baseUrl, {
       method: 'POST',
@@ -361,6 +418,26 @@ export class ArtemisJolokia {
     return JSON.stringify(bodyItems);
   };
 }
+
+const validateEndpoint = (endpoint: Endpoint) => {
+  if (!endpoint.name) {
+    throw Error('No endpoint name');
+  }
+  if (!endpoint.auth) {
+    throw Error('No endpoint authentication data');
+  }
+  if (!endpoint.url) {
+    throw Error('No endpoint url');
+  }
+};
+
+export const CreateArtemisJolokia = (
+  endpoint: Endpoint,
+  isFromClient = false,
+): ArtemisJolokia => {
+  validateEndpoint(endpoint);
+  return new ArtemisJolokia(endpoint, isFromClient);
+};
 
 interface JolokiaPostReadBodyItem {
   type: string;

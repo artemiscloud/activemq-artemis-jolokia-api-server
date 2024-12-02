@@ -5,8 +5,10 @@ import createServer from './server';
 import nock from 'nock';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
+import { logger } from './logger';
+import { IsSecurityEnabled } from '../api/controllers/security_manager';
 
-dotenv.config();
+dotenv.config({ path: '.test.env' });
 
 let testServer: https.Server;
 let mockJolokia: nock.Scope;
@@ -29,12 +31,15 @@ const startApiServer = async (): Promise<boolean> => {
       };
       testServer = https.createServer(options, server);
       testServer.listen(9443, () => {
-        console.info('Listening on https://0.0.0.0:9443');
+        logger.info('Listening on https://0.0.0.0:9443');
+        logger.info(
+          'Security is ' + (IsSecurityEnabled() ? 'enabled' : 'disabled'),
+        );
       });
       return true;
     })
     .catch((err) => {
-      console.log('error starting server', err);
+      logger.info('error starting server', err);
       return false;
     });
   return result;
@@ -65,6 +70,9 @@ afterAll(() => {
 });
 
 const doGet = async (url: string, token: string): Promise<fetch.Response> => {
+  if (!token) {
+    throw Error('token undefined ' + token);
+  }
   const fullUrl = apiUrlBase + url;
   const encodedUrl = fullUrl.replace(/,/g, '%2C');
   const response = await fetch(encodedUrl, {
@@ -146,7 +154,7 @@ describe('test api server login', () => {
     expect(response.ok).toBeTruthy();
     const data = await response.json();
 
-    expect(data['jolokia-session-id']).toBeDefined();
+    expect(data['jolokia-session-id'].length).toBeGreaterThan(0);
   });
 
   it('test login failure', async () => {
@@ -174,6 +182,7 @@ describe('test api server apis', () => {
     const response = await doLogin();
     const data = await response.json();
     authToken = data['jolokia-session-id'];
+    expect(authToken.length).toBeGreaterThan(0);
   });
 
   it('test get brokers', async () => {

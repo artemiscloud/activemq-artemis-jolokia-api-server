@@ -1,22 +1,21 @@
 import * as express from 'express';
 import jwt from 'jsonwebtoken';
-import { ArtemisJolokia } from '../apiutil/artemis_jolokia';
+import {
+  ArtemisJolokia,
+  CreateArtemisJolokia,
+} from '../apiutil/artemis_jolokia';
+import { GetSecurityManager, IsSecurityEnabled } from './security_manager';
+import { GetEndpointManager } from './endpoint_manager';
+import {
+  AuthenticationData,
+  AuthScheme,
+  Endpoint,
+  GenerateJWTToken,
+  GetSecretToken,
+} from '../../utils/security_util';
 import { logger } from '../../utils/logger';
 
 const securityStore = new Map<string, ArtemisJolokia>();
-
-const getSecretToken = (): string => {
-  return process.env.SECRET_ACCESS_TOKEN as string;
-};
-
-const generateJWTToken = (id: string): string => {
-  const payload = {
-    id: id,
-  };
-  return jwt.sign(payload, getSecretToken(), {
-    expiresIn: 60 * 60 * 1000,
-  });
-};
 
 // to by pass CodeQL code scanning warning
 const validateHostName = (host: string) => {
@@ -87,20 +86,28 @@ export const login = (req: express.Request, res: express.Response) => {
     return;
   }
 
-  const jolokia = new ArtemisJolokia(
-    userName,
-    password,
-    validHost,
-    validScheme,
-    validPort,
-  );
+  const authData: AuthenticationData = {
+    scheme: AuthScheme.Basic,
+    data: {
+      username: userName,
+      password: password,
+    },
+  };
+
+  const endpoint: Endpoint = {
+    name: brokerName,
+    url: validScheme + '://' + validHost + ':' + validPort,
+    auth: [authData],
+  };
+
+  const jolokia = CreateArtemisJolokia(endpoint, true);
 
   try {
     jolokia
-      .validateUser()
+      .validateBroker()
       .then((result) => {
         if (result) {
-          const token = generateJWTToken(brokerName);
+          const token = GenerateJWTToken(brokerName);
           securityStore.set(brokerName, jolokia);
 
           res.json({
@@ -113,15 +120,55 @@ export const login = (req: express.Request, res: express.Response) => {
             status: 'failed',
             message: 'Invalid credential. Please try again.',
           });
+          res.end();
         }
-        res.end();
       })
       .catch((e) => {
-        logger.error('got exception while login', e);
+        logger.error({ error: e }, 'got exception while login');
         res.status(500).json({
           status: 'failed',
           message: 'Internal error',
         });
+        res.end();
+      });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal Server Error',
+    });
+    res.end();
+  }
+};
+
+export const serverLogin = (req: express.Request, res: express.Response) => {
+  try {
+    if (!IsSecurityEnabled()) {
+      res
+        .status(200)
+        .json({
+          status: 'succeed',
+          message: 'security disabled',
+        })
+        .end();
+      return;
+    }
+    const securityManager = GetSecurityManager();
+
+    securityManager
+      .login(req.body)
+      .then((token) => {
+        res.json({
+          status: 'success',
+          message: 'You have successfully logged in the api server.',
+          bearerToken: token,
+        });
+      })
+      .catch((err) => {
+        res.status(401).json({
+          status: 'failed',
+          message: 'Invalid credential. Please try again.',
+        });
+        res.end();
       });
   } catch (err) {
     res.status(500).json({
@@ -136,8 +183,73 @@ const ignoreAuth = (path: string): boolean => {
   return (
     path === '/api/v1/jolokia/login' ||
     path === '/api/v1/api-info' ||
+    path === '/api/v1/server/login' ||
     !path.startsWith('/api/v1/')
   );
+};
+
+export const PreOperation = async (
+  req: express.Request,
+  res: express.Response,
+  next: any,
+) => {
+  const targetEndpoint = req.query.targetEndpoint;
+  if (targetEndpoint) {
+    try {
+      const jolokia = GetEndpointManager().getJolokia(targetEndpoint as string);
+      jolokia
+        .validateBroker()
+        .then((result) => {
+          if (result) {
+            res.locals.jolokia = jolokia;
+            next();
+          } else {
+            res.status(500).json({
+              status: 'failed',
+              message: 'failed to access jolokia endpoint',
+            });
+            res.end();
+          }
+        })
+        .catch((err) => {
+          logger.debug(err, 'failed access jolokia endpoint');
+          res.status(500).json({
+            status: 'failed',
+            message: 'failed to access jolokia endpoint',
+          });
+          res.end();
+        });
+    } catch (err) {
+      logger.debug(err, 'failed to access endpoint');
+      res.status(500).json({
+        status: 'failed',
+        message: 'no available endpoint',
+      });
+      res.end();
+    }
+  } else {
+    next();
+  }
+};
+
+export const VerifyAuth = async (
+  req: express.Request,
+  res: express.Response,
+  next: any,
+) => {
+  try {
+    if (ignoreAuth(req.path)) {
+      next();
+    } else {
+      GetSecurityManager().validateRequest(req, res, next);
+    }
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal Server Error',
+    });
+    res.end();
+  }
 };
 
 export const VerifyLogin = async (
@@ -149,35 +261,44 @@ export const VerifyLogin = async (
     if (ignoreAuth(req.path)) {
       next();
     } else {
-      const authHeader = req.headers['jolokia-session-id'] as string;
+      if (!(res.locals.jolokia || req.path.startsWith('/api/v1/server/'))) {
+        const authHeader = req.headers['jolokia-session-id'] as string;
 
-      if (!authHeader) {
-        res.sendStatus(401);
-      } else {
-        jwt.verify(
-          authHeader,
-          getSecretToken(),
-          async (err: any, decoded: any) => {
-            if (err) {
-              res.status(401).json({
-                status: 'failed',
-                message: 'This session has expired. Please login again',
-              });
-            } else {
-              const brokerKey = decoded['id'];
-              const jolokia = securityStore.get(brokerKey);
-              if (jolokia) {
-                res.locals.jolokia = jolokia;
-                next();
-              } else {
+        if (!authHeader) {
+          res.status(401).json({
+            status: 'failed',
+            message: 'unauthenticated',
+          });
+          res.end();
+        } else {
+          jwt.verify(
+            authHeader,
+            GetSecretToken(),
+            async (err: any, decoded: any) => {
+              if (err) {
+                logger.error('verify failed', err);
                 res.status(401).json({
                   status: 'failed',
                   message: 'This session has expired. Please login again',
                 });
+              } else {
+                const brokerKey = decoded['id'];
+                const jolokia = securityStore.get(brokerKey);
+                if (jolokia) {
+                  res.locals.jolokia = jolokia;
+                  next();
+                } else {
+                  res.status(401).json({
+                    status: 'failed',
+                    message: 'This session has expired. Please login again',
+                  });
+                }
               }
-            }
-          },
-        );
+            },
+          );
+        }
+      } else {
+        next();
       }
     }
   } catch (err) {
@@ -186,4 +307,8 @@ export const VerifyLogin = async (
       message: 'Internal Server Error',
     });
   }
+};
+
+const isAdminOp = (path: string): boolean => {
+  return path.startsWith('/api/v1/server/admin/');
 };

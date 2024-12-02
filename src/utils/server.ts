@@ -3,14 +3,18 @@ import * as OpenApiValidator from 'express-openapi-validator';
 import { Express } from 'express-serve-static-core';
 import { Summary, connector, summarise } from 'swagger-routes-express';
 import { rateLimit } from 'express-rate-limit';
-//import YAML from 'yamljs';
 import * as YAML from 'js-yaml';
 import * as fs from 'fs';
 import path from 'path';
 import cors from 'cors';
-
 import * as api from '../api/controllers';
 import { logger, logRequest } from './logger';
+
+import {
+  InitSecurity,
+  IsSecurityEnabled,
+} from '../api/controllers/security_manager';
+import { InitEndpoints } from '../api/controllers/endpoint_manager';
 
 export let API_SUMMARY: Summary;
 
@@ -22,6 +26,10 @@ const createServer = async (enableLogRequest: boolean): Promise<Express> => {
   API_SUMMARY = summarise(apiDefinition);
 
   logger.debug(API_SUMMARY);
+
+  await InitSecurity();
+
+  await InitEndpoints();
 
   const server = express();
   // here we can intialize body/cookies parsers, connect logger, for example morgan
@@ -42,7 +50,8 @@ const createServer = async (enableLogRequest: boolean): Promise<Express> => {
     apiSpec: yamlSpecFile,
     validateRequests: true,
     validateResponses: true,
-    ignorePaths: /jolokia\/login/,
+    validateSecurity: IsSecurityEnabled(),
+    ignorePaths: /jolokia|server\/login/,
   };
 
   server.use(express.json());
@@ -50,6 +59,7 @@ const createServer = async (enableLogRequest: boolean): Promise<Express> => {
   server.use(express.urlencoded({ extended: false }));
   server.use(cors());
   server.use(OpenApiValidator.middleware(validatorOptions));
+
   server.use((req, res, next) => {
     if (process.env.NODE_ENV === 'production') {
       logger.debug(
@@ -72,6 +82,13 @@ const createServer = async (enableLogRequest: boolean): Promise<Express> => {
       next();
     }
   });
+
+  server.use(api.PreOperation);
+
+  if (IsSecurityEnabled()) {
+    server.use(api.VerifyAuth);
+  }
+
   server.use(api.VerifyLogin);
 
   const connect = connector(api, apiDefinition, {

@@ -7,6 +7,8 @@ import {
   JolokiaReadResponse,
 } from '../apiutil/artemis_jolokia';
 import { API_SUMMARY } from '../../utils/server';
+import { GetEndpointManager } from './endpoint_manager';
+import { IsSecurityEnabled } from './security_manager';
 import { logger } from '../../utils/logger';
 
 const BROKER = 'broker';
@@ -22,6 +24,38 @@ const parseProps = (rawProps: string): Map<string, string> => {
     map.set(key, value.replace(new RegExp('"', 'g'), ''));
   });
   return map;
+};
+
+export const listEndpoints = (
+  _: express.Request,
+  res: express.Response,
+): void => {
+  try {
+    GetEndpointManager()
+      .listEndpoints()
+      .then((result) => {
+        res.json(
+          result.map((entry) => {
+            return {
+              name: entry.name,
+              url: entry.serverUrl,
+            };
+          }),
+        );
+      })
+      .catch((err: any) => {
+        res.status(500).json({
+          status: 'error',
+          message: 'server error ' + JSON.stringify(err),
+        });
+      });
+  } catch (err) {
+    logger.error(err);
+    res.status(500).json({
+      status: 'error',
+      message: 'server error: ' + JSON.stringify(err),
+    });
+  }
 };
 
 export const getBrokers = (_: express.Request, res: express.Response): void => {
@@ -41,11 +75,14 @@ export const getBrokers = (_: express.Request, res: express.Response): void => {
           }),
         );
       })
-      .catch((error: any) => {
-        logger.error(error);
+      .catch((err: any) => {
+        logger.debug(err, 'error getting BROKER comp');
+        res.status(500).json({
+          status: 'error',
+          message: 'server error ' + JSON.stringify(err),
+        });
       });
   } catch (err) {
-    logger.error(err);
     res.status(500).json({
       status: 'error',
       message: 'server error: ' + JSON.stringify(err),
@@ -704,6 +741,9 @@ export const execMBeanOperation = (
 
 export const apiInfo = (_: express.Request, res: express.Response): void => {
   res.json({
+    security: {
+      enabled: IsSecurityEnabled(),
+    },
     message: API_SUMMARY,
     status: 'successful',
   });

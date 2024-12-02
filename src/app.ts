@@ -3,9 +3,11 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
-import { logger } from './utils/logger';
+import { InitLoggers, logger } from './utils/logger';
 
 dotenv.config();
+
+InitLoggers();
 
 logger.info(
   `Starting plugin ${process.env.PLUGIN_NAME} ${process.env.PLUGIN_VERSION}`,
@@ -45,8 +47,16 @@ createServer(isReqLogEnabled === 'true')
     const secureServer = https.createServer(options, server);
     secureServer.listen(9443, () => {
       logger.info('Listening on https://0.0.0.0:9443');
+      const securityEnabled =
+        process.env.API_SERVER_SECURITY_ENABLED !== 'false';
+      if (securityEnabled) {
+        logger.info('security is enabled.');
+      } else {
+        logger.warn('security is disabled.');
+      }
     });
   })
   .catch((err) => {
     logger.error(`Error: ${err}`);
+    process.exit(1);
   });

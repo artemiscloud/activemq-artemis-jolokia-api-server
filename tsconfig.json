@@ -2,9 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "target": "es2020",
-    "lib": [
-      "es2020"
-    ],
+    "lib": ["es2020"],
     "module": "CommonJS",
     "moduleResolution": "node",
     "outDir": "./dist",
@@ -16,6 +14,6 @@
       "@app/*": ["src/*"]
     }
   },
-  "include": ["./src/*", "./env"],
+  "include": ["./src/*"],
   "exclude": ["node_modules", "dist"]
 }
